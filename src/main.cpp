@@ -186,7 +186,12 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
     LCS lcs(origin);
     Cache cache(inputDir);
 
-    #pragma omp parallel for default(shared)
+    //Parallelize the computation
+    //Scheduling static,1 will interleave the different threads
+    //(i.e. thread 1 gets tile 1, thread 2 tile 2 etc.)
+    //This should lead them to sharing more tiles, which means 
+    //less I/O overhead while reading the tiles from disk.
+    #pragma omp parallel for default(shared) schedule(static,1)
     for (int i = 0; i < tileDefinitions.numValues(); ++i)
     {
         try
@@ -203,10 +208,10 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
 
             std::ofstream file(filename);
 
-            if (!args["--ascii-ply"])
-                mesh.toBinaryPly(file);
-            else
+            if (args["--ascii-ply"] && args["--ascii-ply"].asBool())
                 mesh.toAsciiPly(file);
+            else
+                mesh.toBinaryPly(file);
         }
         catch(std::exception &e)
         { //Exceptions break the omp loop and lead to a terminate(). Handle them here.
