@@ -15,4 +15,6 @@ WGS84::Point parseWGS84(const std::string &coordinates);
 
 Eigen::Vector2i parseSize(const std::string &size);
 
+int parseNumberOfThreads(const std::string &n);
+
 #endif // PARSING_H

@@ -12,7 +12,10 @@
 #endif // _MSC_VER
 
 #include <cstdlib>
+#include <ctgmath>
 #include <dirent.h>
+
+#include <omp.h>
 
 #include "SRTM.h"
 #include "Mesh.h"
@@ -32,6 +35,7 @@ Options:
    -o --origin=<origin>              Define the origin of the generated tiles (in WGS84 coordinates).
    -s --tile-size=wxh                Set the maximum size of tiles (in sampling points).
    -a --ascii-ply                    Generate ASCII-PLY meshes.
+   -j <n>                            Generate N meshes in parallel.  [default: #CPUs]
    --srtm3                           The input directory contains SRTM data using a 90m resolution.
 
 p1 and p2 denote two diagonally located corners of the bounding box of the desired mesh (using the WGS84
@@ -147,6 +151,12 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
     else
         tileSize = mapSize;
 
+    omp_set_nested(0);
+    {
+        int num_threads = parseNumberOfThreads(args["-j"].asString());
+        omp_set_num_threads(num_threads);
+    }
+
     static const auto ceil = [](double a){ return std::ceil(a); };
     Eigen::Vector2i numTiles = Eigen::Vector2d( //Element-wise division -> ceiling
                                     (mapSize.cast<double>().array()/tileSize.cast<double>().array()
@@ -175,6 +185,7 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
 
     LCS lcs(origin);
     Cache cache(inputDir);
+
     #pragma omp parallel for default(shared)
     for (int i = 0; i < tileDefinitions.numValues(); ++i)
     {
@@ -209,6 +220,7 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
             exit(-1);
         }
     }
+
 }
 
 
@@ -223,6 +235,7 @@ int main(int argc, const char** argv)
                                    "SRTM2PLY 0.1"              // version string
                                    );
 
+        printArguments(args);
 
         if (args["--srtm3"] && args["--srtm3"].asBool())
             generateMeshes<SRTM3::Tile>(args);

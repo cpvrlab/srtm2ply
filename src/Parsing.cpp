@@ -5,6 +5,7 @@
 #include <sstream>
 #include <cmath>
 #include <ctgmath>
+#include <omp.h>
 
 std::string parseErrorMessage(const std::string &expression)
 {
@@ -22,6 +23,8 @@ WGS84::Point parseWGS84(const std::string &coordinates)
     std::regex pattern(
                     //Latitude
                     //--------
+                       "^"
+                       "=?"
                        "("
                            "-?"                    //Sign
                            "(?:"
@@ -61,6 +64,7 @@ WGS84::Point parseWGS84(const std::string &coordinates)
                            ")"
                            "m"                         //Mandatory unit specification (Meters)
                        ")?"
+                       "$"
                        );
 
     std::smatch match;
@@ -93,7 +97,8 @@ WGS84::Point parseWGS84(const std::string &coordinates)
 
 Eigen::Vector2i parseSize(const std::string &size)
 {
-    std::regex pattern(
+    std::regex pattern( "^"
+                        "=?"
                         "("
                             "\\d+"
                         ")"
@@ -101,6 +106,7 @@ Eigen::Vector2i parseSize(const std::string &size)
                         "("
                             "\\d+"
                         ")"
+                        "$"
                      );
 
     std::smatch match;
@@ -117,5 +123,20 @@ Eigen::Vector2i parseSize(const std::string &size)
     return {x,y};
 }
 
+int parseNumberOfThreads(const std::string &n)
+{
+    std::regex pattern1("^=?#CPUs$");
+    std::regex pattern2("^=?(\\d+)$");
 
+    std::smatch match;
+
+    if (std::regex_match(n, match, pattern1))
+        return omp_get_num_procs();
+
+    if (!std::regex_match(n, match, pattern2))
+        return 1;
+
+    int result = strtol(std::string(match[1]).c_str(),nullptr,10);
+    return std::max(result,1);
+}
 
