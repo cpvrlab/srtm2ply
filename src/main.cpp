@@ -224,7 +224,7 @@ int main(int argc, const char** argv)
                                    );
 
 
-        if (args["--srtm3"])
+        if (args["--srtm3"] && args["--srtm3"].asBool())
             generateMeshes<SRTM3::Tile>(args);
         else
             generateMeshes<SRTM1::Tile>(args);
