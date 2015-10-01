@@ -1,9 +1,15 @@
 
-#include <docopt.h>
+
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <atomic>
 
 #include <cstddef>
-#include <iostream>
+#include <cstdlib>
+#include <ctgmath>
 
+#include <dirent.h>
 #ifdef _MSC_VER
 #include <direct.h>
 #define getcwd _getcwd
@@ -11,11 +17,9 @@
 #include <unistd.h>
 #endif // _MSC_VER
 
-#include <cstdlib>
-#include <ctgmath>
-#include <dirent.h>
-
 #include <omp.h>
+
+#include <docopt.h>
 
 #include "SRTM.h"
 #include "Mesh.h"
@@ -186,47 +190,76 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
     LCS lcs(origin);
     Cache cache(inputDir);
 
-    //Parallelize the computation
-    //Scheduling static,1 will interleave the different threads
-    //(i.e. thread 1 gets tile 1, thread 2 tile 2 etc.)
-    //This should lead them to sharing more tiles, which means 
-    //less I/O overhead while reading the tiles from disk.
-    #pragma omp parallel for default(shared) schedule(static,1)
-    for (int i = 0; i < tileDefinitions.numValues(); ++i)
-    {
-        try
+    const size_t numTasks = tileDefinitions.numValues();
+    std::atomic<size_t> tasksCompleted;
+    tasksCompleted.store(0);
+
+    static const auto generate_tiles = [&]() -> void {
+        //Parallelize the computation
+        //Scheduling static,1 will interleave the different threads
+        //(i.e. thread 1 gets tile 1, thread 2 tile 2 etc.)
+        //This should lead them to sharing more tiles, which means 
+        //less I/O overhead while reading the tiles from disk.
+        #pragma omp parallel for default(shared)
+        for (int i = 0; i < tileDefinitions.numValues(); ++i)
         {
-            std::stringstream ss;
-            ss << outputDir << "/" << i << ".ply";
+            try
+            {
+                std::stringstream ss;
+                ss << outputDir << "/" << i << ".ply";
 
-            auto filename = ss.str();
-            //ScopedTimer timer(filename);
+                auto filename = ss.str();
+                //ScopedTimer timer(filename);
 
-            auto &bounds = tileDefinitions[i];
-            auto tile = Tile::stitch(bounds,cache);
-            auto mesh = meshFromSrtmTile(tile, lcs);
+                auto &bounds = tileDefinitions[i];
+                auto tile = Tile::stitch(bounds,cache);
+                auto mesh = meshFromSrtmTile(tile, lcs);
 
-            std::ofstream file(filename);
+                std::ofstream file(filename);
 
-            if (args["--ascii-ply"] && args["--ascii-ply"].asBool())
-                mesh.toAsciiPly(file);
-            else
-                mesh.toBinaryPly(file);
+                if (args["--ascii-ply"] && args["--ascii-ply"].asBool())
+                    mesh.toAsciiPly(file);
+                else
+                    mesh.toBinaryPly(file);
+            }
+            catch(std::exception &e)
+            { //Exceptions break the omp loop and lead to a terminate(). Handle them here.
+                std::cerr << "An unexpected error occurred: \n"
+                          << e.what() << std::endl;
+                exit(-1);
+            }
+            catch(...)
+            {
+                std::cerr << "An unexpected error occurred (unknown type)." << std::endl;
+                exit(-1);
+            }
+            ++tasksCompleted;
         }
-        catch(std::exception &e)
-        { //Exceptions break the omp loop and lead to a terminate(). Handle them here.
-            std::cerr << "An unexpected error occurred: \n"
-                      << e.what() << std::endl;
-            exit(-1);
-        }
-        catch(...)
+    };
+
+    static const auto print_progress = [&]() -> void {
+        size_t lastCounter    = 0;
+        size_t currentCounter = 0;
+        do
         {
-            std::cerr << "An unexpected error occurred (unknown type)." << std::endl;
-            exit(-1);
-        }
-    }
+            currentCounter = tasksCompleted.load();
+            if (currentCounter != lastCounter)
+            {
+                lastCounter = currentCounter;
+                std::cout << "Progress: " << std::setw(7) << std::fixed << std::setprecision(3) 
+                          << ((100.0 * currentCounter) / numTasks) << "% "
+                          << "( " << std::setw(3) << currentCounter << " / " << std::setw(3) << numTasks << " completed)\n";
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        } while(currentCounter != numTasks);
+    };
 
-}
+    auto progressThread = std::thread(print_progress);
+    auto generationThread = std::thread(generate_tiles);
+
+    progressThread.join();
+    generationThread.join();
+}   
 
 
 int main(int argc, const char** argv)
