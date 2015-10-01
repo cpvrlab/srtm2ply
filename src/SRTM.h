@@ -597,11 +597,6 @@ private:
         std::vector<T> buffer(size[0],0);
         for (int y = 0; y < size[1]/2; ++y)
         {
-            //Swapping elements manually (slow as hell):
-//            for (int x = 0; x < size[0]; ++x)
-//                std::swap(_data[{x,y}],_data[{x,size[1]-(y+1)}]);
-
-            //Swap the data row-wise (mush faster)
             memcpy(&buffer[0]             , &_data[{0,y}]          , sizeof(T)*size[0]);
             memcpy(&_data[{0,y}]          , &_data[{0,size[1]-y-1}], sizeof(T)*size[0]);
             memcpy(&_data[{0,size[1]-y-1}], &buffer[0]             , sizeof(T)*size[0]);
