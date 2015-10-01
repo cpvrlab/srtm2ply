@@ -235,7 +235,7 @@ int main(int argc, const char** argv)
                                    "SRTM2PLY 0.1"              // version string
                                    );
 
-        printArguments(args);
+        //printArguments(args);
 
         if (args["--srtm3"] && args["--srtm3"].asBool())
             generateMeshes<SRTM3::Tile>(args);
