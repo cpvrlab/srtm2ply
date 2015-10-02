@@ -244,39 +244,63 @@ public:
         Offset _offset;
     };
 
-    class Cache
+    class AbstractCache
+    {
+    public:
+        typedef typename std::shared_ptr<Tile> TilePtr;
+
+        virtual TilePtr getTile(const SamplingPointLocation &p) = 0;
+
+    protected:
+        AbstractCache(){}
+    };
+
+    template<class P>
+    class CacheImpl: public AbstractCache
     {
     public:
         typedef typename std::shared_ptr<Tile> TilePtr;
         typedef typename std::weak_ptr<Tile> WeakTilePtr;
 
-        Cache(std::string path):
+        CacheImpl(std::string path):
             _path(std::move(path))
         {}
 
-        TilePtr getTile(const SamplingPointLocation &p)
+        TilePtr getTile(const SamplingPointLocation &p) override
         {
             Eigen::Vector2i pos = Tile::fileOrigin(p);
 
-            std::lock_guard<std::mutex> lock(_mutex);
-            auto &ptr = _cache[pos];
-            auto tile = ptr.lock();
-            if (!tile)
+            auto &entry = tryGetTile(pos);
+
+            TilePtr ptr = lock(entry.tile);
+            if (!ptr)
             {
-                if (_blacklist[pos])
+                if (entry.blacklisted)
                     return nullptr;
 
-                try
                 {
-                    tile = std::make_shared<Tile>(Tile::loadFromDisk(p,_path));
-                    ptr = tile;
-                } catch(FileNotFound &e)
-                {
-                    _blacklist[pos] = true;
-                    return nullptr;
+                    //Lock IO operation (loading from disk) with a separate mutex
+                    //to avoid blocking cache access while the disk is working.
+                    std::lock_guard<std::mutex> ioLock(_ioMutex);
+
+                    //If the tile was loaded since our lookup, return it
+                    ptr = lock(entry.tile);
+                    if (ptr || entry.blacklisted)
+                        return ptr;
+
+                    try
+                    {
+                        ptr = std::make_shared<Tile>(Tile::loadFromDisk(p,_path));
+                        entry.tile = ptr;
+                    }
+                    catch(FileNotFound &e)
+                    {
+                        entry.blacklisted = true;
+                        return nullptr;
+                    }
                 }
             }
-            return tile;
+            return ptr;
         }
 
     private:
@@ -295,11 +319,42 @@ public:
            }
         };
 
-        std::mutex _mutex;
+        struct TileCacheEntry
+        {
+            TileCacheEntry():
+                tile(),
+                blacklisted(false)
+            {}
+
+            TileCacheEntry(const TileCacheEntry&) = default;
+            TileCacheEntry(TileCacheEntry&&) = default;
+
+            TileCacheEntry &operator=(const TileCacheEntry&) = default;
+            TileCacheEntry &operator=(TileCacheEntry&&) = default;
+
+            P tile;
+            bool blacklisted;
+        };
+
+        typedef std::unordered_map<Eigen::Vector2i,TileCacheEntry,Hasher> TileCache;
+
+        TileCacheEntry &tryGetTile(const Eigen::Vector2i &pos)
+        {
+            std::lock_guard<std::mutex> cacheLock(_cacheMutex);
+            return _cache[pos];
+        }
+
+        inline static TilePtr lock(TilePtr &ptr)     noexcept { return ptr; }
+        inline static TilePtr lock(WeakTilePtr &ptr) noexcept { return ptr.lock();   }
+
+        std::mutex _cacheMutex;
+        std::mutex _ioMutex;
         std::string _path;
-        std::unordered_map<Eigen::Vector2i,WeakTilePtr,Hasher> _cache;
-        std::unordered_map<Eigen::Vector2i,bool,Hasher> _blacklist;
+        TileCache _cache;
     };
+
+    typedef CacheImpl<std::shared_ptr<Tile>> Cache;
+    typedef CacheImpl<std::weak_ptr<Tile>> WeakCache;
 
     //Static methods
     //--------------
@@ -346,7 +401,7 @@ public:
         return tile;
     }
 
-    static SrtmTile stitch(const Bounds &bounds, Cache &cache)
+    static SrtmTile stitch(const Bounds &bounds, AbstractCache &cache)
     {
         SrtmTile result(bounds);
         auto tiles = loadIntersectingTiles(bounds, cache);
@@ -364,7 +419,7 @@ public:
         return stitch(bounds,cache);
     }
 
-    static SrtmTile stitch(const WGS84::Point &from, const WGS84::Point &to, Cache &cache)
+    static SrtmTile stitch(const WGS84::Point &from, const WGS84::Point &to, AbstractCache &cache)
     {
         return stitch(bounds(from,to), cache);
     }
@@ -528,7 +583,7 @@ private:
             dst._data[dstView.tileIndex(i)] = srcView.altitudeAt(i);
     }
 
-    static Tensor<std::shared_ptr<Tile>,2> loadIntersectingTiles(const Bounds &bounds, Cache &cache)
+    static Tensor<std::shared_ptr<Tile>,2> loadIntersectingTiles(const Bounds &bounds, AbstractCache &cache)
     {
         Tensor<std::shared_ptr<Tile>,2> tiles;
         Eigen::Vector2i diagonal = bounds.max() - fileOrigin(bounds.min());
