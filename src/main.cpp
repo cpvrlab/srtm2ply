@@ -195,7 +195,29 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
 
     const size_t numTasks = tileDefinitions.numValues();
     std::atomic<size_t> tasksCompleted;
+    auto start = std::chrono::high_resolution_clock::now();
     tasksCompleted.store(0);
+
+    static const auto print_progress = [&]() -> void {
+        size_t lastCounter    = 0;
+        size_t currentCounter = 0;
+        do
+        {
+            currentCounter = tasksCompleted.load();
+            if (currentCounter != lastCounter)
+            {
+                auto now = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::seconds>(now-start).count();
+
+                lastCounter = currentCounter;
+                std::cout << "Progress: " << std::setw(7) << std::fixed << std::setprecision(3)
+                          << ((100.0 * currentCounter) / numTasks) << "% "
+                          << "( " << std::setw(5) << currentCounter << " / " << std::setw(5) << numTasks << " completed; "
+                          << (((double)currentCounter)/duration) << " Tiles/s)\n";
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        } while(currentCounter != numTasks);
+    };
 
     static const auto generate_tiles = [&]() -> void {
         //Parallelize the computation
@@ -240,28 +262,17 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
         }
     };
 
-    static const auto print_progress = [&]() -> void {
-        size_t lastCounter    = 0;
-        size_t currentCounter = 0;
-        do
-        {
-            currentCounter = tasksCompleted.load();
-            if (currentCounter != lastCounter)
-            {
-                lastCounter = currentCounter;
-                std::cout << "Progress: " << std::setw(7) << std::fixed << std::setprecision(3)
-                          << ((100.0 * currentCounter) / numTasks) << "% "
-                          << "( " << std::setw(3) << currentCounter << " / " << std::setw(3) << numTasks << " completed)\n";
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        } while(currentCounter != numTasks);
-    };
-
     auto progressThread = std::thread(print_progress);
     auto generationThread = std::thread(generate_tiles);
 
     progressThread.join();
     generationThread.join();
+
+    auto now = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(now-start).count();
+    std::cout << "\n"
+              << "Elapsed time: " << duration << "s."
+              << std::endl;
 }
 
 
