@@ -127,7 +127,9 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
     typedef T Tile;
     typedef typename Tile::Size Size;
     typedef typename Tile::Bounds Bounds;
+    typedef typename Tile::AbstractCache AbstractCache;
     typedef typename Tile::Cache Cache;
+    typedef typename Tile::Cache WeakCache;
 
     const std::string cwd(getcwd(nullptr,0));
 
@@ -188,7 +190,8 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
     }
 
     LCS lcs(origin);
-    Cache cache(inputDir);
+//    std::unique_ptr<AbstractCache> cache(new Cache(inputDir));
+    std::unique_ptr<AbstractCache> cache(new WeakCache(inputDir));
 
     const size_t numTasks = tileDefinitions.numValues();
     std::atomic<size_t> tasksCompleted;
@@ -198,7 +201,7 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
         //Parallelize the computation
         //Scheduling static,1 will interleave the different threads
         //(i.e. thread 1 gets tile 1, thread 2 tile 2 etc.)
-        //This should lead them to sharing more tiles, which means 
+        //This should lead them to sharing more tiles, which means
         //less I/O overhead while reading the tiles from disk.
         #pragma omp parallel for default(shared)
         for (int i = 0; i < tileDefinitions.numValues(); ++i)
@@ -212,7 +215,7 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
                 //ScopedTimer timer(filename);
 
                 auto &bounds = tileDefinitions[i];
-                auto tile = Tile::stitch(bounds,cache);
+                auto tile = Tile::stitch(bounds,*cache);
                 auto mesh = meshFromSrtmTile(tile, lcs);
 
                 std::ofstream file(filename);
@@ -246,7 +249,7 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
             if (currentCounter != lastCounter)
             {
                 lastCounter = currentCounter;
-                std::cout << "Progress: " << std::setw(7) << std::fixed << std::setprecision(3) 
+                std::cout << "Progress: " << std::setw(7) << std::fixed << std::setprecision(3)
                           << ((100.0 * currentCounter) / numTasks) << "% "
                           << "( " << std::setw(3) << currentCounter << " / " << std::setw(3) << numTasks << " completed)\n";
             }
@@ -259,7 +262,7 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
 
     progressThread.join();
     generationThread.join();
-}   
+}
 
 
 int main(int argc, const char** argv)
