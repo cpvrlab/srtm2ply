@@ -5,8 +5,10 @@ A simple tool to generate tiled PLY meshes from SRTM data.
 # Usage
 ```
 Create meshes from SRTM files.
+
 Usage:
    srtm2ply [options] <p1> <p2> [<INPUT_DIRECTORY> [<OUTPUT_DIRECTORY>]]
+   
 Options:
    -h --help                         Print this page.
    -v --version                      Display the application's version number.
