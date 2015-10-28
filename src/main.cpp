@@ -234,16 +234,16 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
             try
             {
                 std::stringstream ss;
-                ss << outputDir << "/" << i << ".ply";
+                ss << outputDir << '/' << i << ".ply";
 
-                auto filename = ss.str();
+                std::string filename = ss.str();
                 //ScopedTimer timer(filename);
 
                 auto &bounds = tileDefinitions[i];
                 auto tile = Tile::stitch(bounds,*cache);
                 auto mesh = meshFromSrtmTile(tile, lcs);
 
-                std::ofstream file(filename);
+                std::ofstream file(filename, std::ios_base::binary);
 
                 if (args["--ascii-ply"] && args["--ascii-ply"].asBool())
                     mesh.toAsciiPly(file);
