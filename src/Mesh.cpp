@@ -134,8 +134,20 @@ void Mesh::toBinaryPly(std::ostream &output) const
     output << "property list uint8 uint" << (8*indexSize) << " vertex_indices\n";
     output << "end_header\n";
 
-    output.write((const char*)vertexPositions.data(),vertexPositions.size()*sizeof(decltype(vertexPositions.front())));
+	auto after_header = output.tellp().seekpos();
+
+	size_t num_vertex_bytes = vertexPositions.size()*sizeof(decltype(vertexPositions.front()));
+    output.write((const char*)vertexPositions.data(), num_vertex_bytes);
+
+	auto after_vertices = output.tellp().seekpos();
+	if (after_vertices - after_header != num_vertex_bytes)
+		throw std::runtime_error("Encountered wrong stream position after writing binary data to file.");
 
     std::vector<unsigned char> facesBuffer = createBinaryFacesBuffer<uint8_t, uint16_t, uint32_t, uint64_t>(indexSize,faces);
-    output.write((const char*)facesBuffer.data(), facesBuffer.size()*sizeof(decltype(facesBuffer.front())));
+	size_t num_face_bytes = facesBuffer.size()*sizeof(decltype(facesBuffer.front()));
+    output.write((const char*)facesBuffer.data(), num_face_bytes);
+
+	auto after_faces = output.tellp().seekpos();
+	if (after_faces - after_vertices != num_face_bytes)
+		throw std::runtime_error("Encountered wrong stream position after writing binary data to file.");
 }
