@@ -1,4 +1,11 @@
 
+#ifndef TENSOR_H
+#define TENSOR_H
+
+#if defined(_MSC_VER)
+#define NOMINMAX
+#endif
+
 #include <vector>
 #include <array>
 #include <iterator>
@@ -320,3 +327,5 @@ private:
 	Size _size;
 	Data _data;
 };
+
+#endif //TENSOR_H

@@ -2,6 +2,10 @@
 #ifndef ARCHITECTURE_H
 #define ARCHITECTURE_H
 
+#if defined(_MSC_VER)
+#define NOMINMAX
+#endif
+
 #include <cstdint>
 
 namespace Architecture

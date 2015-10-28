@@ -2,6 +2,10 @@
 #ifndef MESH_H
 #define MESH_H
 
+#if defined(_MSC_VER)
+#define NOMINMAX
+#endif
+
 #include "Geometry.h"
 #include "SRTM.h"
 

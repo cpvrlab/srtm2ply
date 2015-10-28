@@ -11,11 +11,31 @@ function(FIND_LIBRARIES)
     CMAKE_PARSE_ARGUMENTS(PARSED_ARGS "" "VARNAME" "FILES;DIRECTORIES" ${ARGN})
     set(libs "")
     foreach(lib ${PARSED_ARGS_FILES})
-        find_library(libfile ${lib} HINTS ${PARSED_ARGS_DIRECTORIES} NO_DEFAULT_PATH)
-        if(NOT libfile MATCHES ".*-NOTFOUND")
-            list(APPEND libs ${libfile})
+        if (MSVC)
+            find_library(libfile       ${lib} HINTS ${PARSED_ARGS_DIRECTORIES}/Release NO_DEFAULT_PATH)
+            find_library(libfile_debug ${lib} HINTS ${PARSED_ARGS_DIRECTORIES}/Debug   NO_DEFAULT_PATH)
+
+            message(Looking for ${lib})
+            message(Found: ${libfile})
+            message(${PARSED_ARGS_DIRECTORIES}/Release)
+
+            if(NOT libfile_debug MATCHES ".*-NOTFOUND")
+                list(APPEND libs debug)
+                list(APPEND libs ${libfile_debug})
+            endif()
+            if(NOT libfile MATCHES ".*-NOTFOUND")
+                list(APPEND libs optimized)
+                list(APPEND libs ${libfile})
+            endif()
+            unset(libfile CACHE)
+            unset(libfile_debug CACHE)
+        else()
+            find_library(libfile ${lib} HINTS ${PARSED_ARGS_DIRECTORIES} NO_DEFAULT_PATH)
+            if(NOT libfile MATCHES ".*-NOTFOUND")
+                list(APPEND libs ${libfile})
+            endif()
+            unset(libfile CACHE)
         endif()
-        unset(libfile CACHE)
     endforeach()
     set("${PARSED_ARGS_VARNAME}" "${libs}" PARENT_SCOPE)
     unset(libs)
@@ -27,8 +47,9 @@ endfunction()
 
 project (srtm2ply)
 
-
-if (APPLE)
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "/openmp")
+elseif(APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}    -fopenmp")
@@ -113,7 +134,7 @@ elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
     endif()
 endif()
 
-if (NOT libClipper        OR
+if (#NOT libClipper        OR
     NOT libDocopt         OR
     NOT libGeographiclib  #OR
     )
@@ -125,7 +146,7 @@ if (NOT libClipper        OR
     add_custom_target(Rescan ${CMAKE_COMMAND} ${CMAKE_SOURCE_DIR}
                       DEPENDS
                         external_eigen
-                        external_clipper
+#                       external_clipper
                         external_docopt
                         external_geographiclib
                         external_dirent
@@ -154,6 +175,7 @@ else()
     include_directories(${ADDITIONAL_INCLUDE_DIRS}
                         ${EIGEN_INCLUDE_DIR}
                         ${CLIPPER_INCLUDE_DIR}
+                        ${GEOGRAPHICLIB_INCLUDE_DIR}
                         ${DOCOPT_INCLUDE_DIR}
                         ${DIRENT_INCLUDE_DIR}
                        )
@@ -166,6 +188,10 @@ else()
 
                            ${ADDITIONAL_LIBRARIES}
                            )
+
+    if (MSVC)
+        target_link_libraries(srtm2ply shlwapi.lib)
+    endif()
 endif()
 
 add_dependencies(srtm2ply Rescan)

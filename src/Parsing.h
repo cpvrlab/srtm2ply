@@ -2,6 +2,10 @@
 #ifndef PARSING_H
 #define PARSING_H
 
+#if defined(_MSC_VER)
+#define NOMINMAX
+#endif
+
 #include <exception>
 
 #include "Geometry.h"

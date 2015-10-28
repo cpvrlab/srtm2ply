@@ -2,6 +2,10 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
+#if defined(_MSC_VER)
+#define NOMINMAX
+#endif
+
 #include <string>
 #include <chrono>
 #include <string>

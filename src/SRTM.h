@@ -2,6 +2,10 @@
 #ifndef SRTM_H
 #define SRTM_H
 
+#if defined(_MSC_VER)
+#define NOMINMAX
+#endif
+
 #include "Geometry.h"
 #include "Architecture.h"
 
@@ -165,7 +169,7 @@ public:
     class Subview
     {
     public:
-        typedef Tile::Bounds Bounds;
+        typedef typename Tile::Bounds Bounds;
         typedef Eigen::Vector2i Size;
         typedef Eigen::Vector2i Offset;
 

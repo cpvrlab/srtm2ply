@@ -2,6 +2,10 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
 
+#if defined(_MSC_VER)
+#define NOMINMAX
+#endif
+
 #include <algorithm>
 #include <iterator>
 

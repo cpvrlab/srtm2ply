@@ -1,4 +1,7 @@
 
+#if defined(_MSC_VER)
+#define NOMINMAX
+#endif
 
 #include <iostream>
 #include <thread>
