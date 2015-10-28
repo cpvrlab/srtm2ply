@@ -18,7 +18,8 @@ std::string getAbsolutePath(const std::string &path)
 #if defined(_MSC_VER)
 	result.resize(MAX_PATH,' ');
 	SetLastError(0);
-	GetFullPathName(path.c_str(), result.size(), &result[0], nullptr);
+	size_t numBytes = GetFullPathName(path.c_str(), result.size(), &result[0], nullptr);
+	result.resize(numBytes);
 	if (GetLastError())
 		throw std::runtime_error("Could not determine absolute path of file.");
 	if (!PathFileExists(result.c_str()))
