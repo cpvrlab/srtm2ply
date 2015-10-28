@@ -474,11 +474,30 @@ public:
         return bounds(sw, ne-sw+Eigen::Vector2i(1,1));
     }
 
-    SrtmTile(const SrtmTile&) = default;
-    SrtmTile(SrtmTile&&) = default;
+    SrtmTile(const SrtmTile &other):
+		_bounds(other._bounds),
+		_data(other._data),
+		_aRange(*this),
+		_wRange(*this)
+	{}
+    SrtmTile(SrtmTile &&other):
+		_bounds(std::move(other._bounds)),
+		_data(std::move(other._data)),
+		_aRange(*this),
+		_wRange(*this)
+	{}
 
-    SrtmTile &operator=(const SrtmTile&) = default;
-    SrtmTile &operator=(SrtmTile&&) = default;
+    SrtmTile &operator=(const SrtmTile &other)
+	{
+		_bounds = other._bounds;
+		_data   = other._data;
+	}
+
+    SrtmTile &operator=(SrtmTile &&other)
+	{
+		_bounds = std::move(other._bounds);
+		_data   = std::move(other._data);
+	}
 
     inline bool isEmpty() const noexcept { return _bounds.isEmpty(); }
     inline const Bounds &bounds() const noexcept { return _bounds; }
