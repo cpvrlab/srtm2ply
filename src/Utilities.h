@@ -42,6 +42,8 @@ void time(std::string name, F callback)
     callback();
 }
 
+std::string getCwd();
+
 std::string absolutePath(const std::string &path);
 
 #endif // UTILITIES_H

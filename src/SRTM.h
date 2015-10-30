@@ -188,13 +188,13 @@ public:
         Subview(const Subview&) = default;
         Subview &operator=(const Subview&) = default;
 
-        inline bool isEmpty() const noexcept { return _bounds.isEmpty(); }
-        inline const Bounds &bounds() const noexcept { return _bounds; }
-        inline const Offset &offset() const noexcept { return _offset; }
-        inline const Size &size() const noexcept { return _size; }
-        inline size_t numValues() const noexcept { return _size.prod(); }
-        inline Index indexAtPosition(const Position &pos) const noexcept { assertCorrectPosition(pos); return Data::positionToIndex(pos,_size); }
-        inline Position positionAtIndex(Index index) const noexcept { assertCorrectIndex(index); return Data::indexToPosition(index,_size); }
+        inline bool isEmpty() const { return _bounds.isEmpty(); }
+        inline const Bounds &bounds() const { return _bounds; }
+        inline const Offset &offset() const { return _offset; }
+        inline const Size &size() const { return _size; }
+        inline size_t numValues() const { return _size.prod(); }
+        inline Index indexAtPosition(const Position &pos) const { assertCorrectPosition(pos); return Data::positionToIndex(pos,_size); }
+        inline Position positionAtIndex(Index index) const { assertCorrectIndex(index); return Data::indexToPosition(index,_size); }
         inline bool contains(const WGS84::Point &p) const { return Tile::Contains(_bounds,p); }
 
         Position tilePosition(const Position &pos) const
@@ -331,10 +331,17 @@ public:
             {}
 
             TileCacheEntry(const TileCacheEntry&) = default;
-            TileCacheEntry(TileCacheEntry&&) = default;
+			TileCacheEntry(TileCacheEntry &&other):
+				tile(std::move(other.tile)),
+				blacklisted(other.blacklisted)
+			{}
 
             TileCacheEntry &operator=(const TileCacheEntry&) = default;
-            TileCacheEntry &operator=(TileCacheEntry&&) = default;
+			TileCacheEntry &operator=(TileCacheEntry &&other)
+			{
+				tile = std::move(other.tile);
+				blacklisted = other.blacklisted;
+			}
 
             P tile;
             bool blacklisted;
@@ -348,8 +355,8 @@ public:
             return _cache[pos];
         }
 
-        inline static TilePtr lock(TilePtr &ptr)     noexcept { return ptr; }
-        inline static TilePtr lock(WeakTilePtr &ptr) noexcept { return ptr.lock();   }
+        inline static TilePtr lock(TilePtr &ptr)     { return ptr; }
+        inline static TilePtr lock(WeakTilePtr &ptr) { return ptr.lock();   }
 
         std::mutex _cacheMutex;
         std::mutex _ioMutex;
@@ -475,17 +482,34 @@ public:
     }
 
     SrtmTile(const SrtmTile&) = default;
-    SrtmTile(SrtmTile&&) = default;
+	SrtmTile(SrtmTile &&other) :
+		_bounds(other._bounds),
+		_data(std::move(other._data)),
+		_aRange(*this),
+		_wRange(*this)
+	{
+		other._bounds.setEmpty();
+	}
 
-    SrtmTile &operator=(const SrtmTile&) = default;
-    SrtmTile &operator=(SrtmTile&&) = default;
+	SrtmTile &operator=(const SrtmTile &other)
+	{
+		_bounds = other._bounds;
+		_data = other._data;
+	}
 
-    inline bool isEmpty() const noexcept { return _bounds.isEmpty(); }
-    inline const Bounds &bounds() const noexcept { return _bounds; }
-    inline const Size &size() const noexcept { return _data.size(); }
-    inline size_t numValues() const noexcept { return _data.numValues(); }
-    inline Index indexAtPosition(const Position &pos) const noexcept { return _data.indexAtPosition(pos); }
-    inline Position positionAtIndex(Index index) const noexcept { return _data.positionAtIndex(index); }
+	SrtmTile &operator=(SrtmTile &&other)
+	{
+		_bounds = other._bounds;
+		other._bounds.setEmpty();
+		_data = std::move(other._data);
+	}
+
+    inline bool isEmpty() const { return _bounds.isEmpty(); }
+    inline const Bounds &bounds() const { return _bounds; }
+    inline const Size &size() const { return _data.size(); }
+    inline size_t numValues() const { return _data.numValues(); }
+    inline Index indexAtPosition(const Position &pos) const { return _data.indexAtPosition(pos); }
+    inline Position positionAtIndex(Index index) const { return _data.positionAtIndex(index); }
     inline bool contains(const WGS84::Point &p) const { return contains(_bounds,p); }
 
     template<bool FETCH_HEIGHT = true>
@@ -644,7 +668,7 @@ private:
     }
 
     //! Determine if the read data neets swapping.
-    inline static bool isSwapNecessary() noexcept
+    inline static bool isSwapNecessary()
     {
         auto endianness = Architecture::ENDIANNESS;
         return endianness != SOURCE_ENDIANNES;

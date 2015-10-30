@@ -30,10 +30,17 @@ struct Mesh
 
     Mesh() = default;
     Mesh(const Mesh&) = default;
-    Mesh(Mesh&&) = default;
+	Mesh(Mesh &&other):
+		vertexPositions(std::move(other.vertexPositions)),
+		faces(std::move(other.faces))
+	{}
 
     Mesh &operator=(const Mesh&) = default;
-    Mesh &operator=(Mesh&&) = default;
+	Mesh &operator=(Mesh &&other)
+	{
+		vertexPositions = std::move(other.vertexPositions);
+		faces = std::move(other.faces);
+	}
 
     void toAsciiPly(std::ostream &output) const;
     void toBinaryPly(std::ostream &output) const;

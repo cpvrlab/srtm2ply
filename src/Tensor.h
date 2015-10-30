@@ -95,10 +95,7 @@ public:
 		{}
 
 		Subblock(const Subblock&) = default;
-		Subblock(Subblock&&) = default;
-
 		Subblock &operator=(const Subblock&) = default;
-		Subblock &operator=(Subblock&&) = default;
 
 		Position positionAtIndex(Index index) const { return Tensor::indexToPosition(index, _size); }
 		Index indexAtPosition(const Position &position) const { return Tensor::positionToIndex(position, _size); }
@@ -178,15 +175,26 @@ public:
 	}
 
 	Tensor(const Tensor&) = default;
-	Tensor(Tensor &&) = default;
+
+	Tensor(Tensor &&other):
+		_size(other._size),
+		_data(std::move(other._data))
+	{
+		other._size = { 0, 0 };
+	}
 
 	Tensor &operator=(const Tensor&) = default;
-	Tensor &operator=(Tensor &&) = default;
+	Tensor &operator=(Tensor &&other)
+	{
+		_size = other._size;
+		other._size = { 0, 0 };
+		_data = std::move(other._data);
+	}
 
     inline bool isEmpty() const { return numValues() == 0; }
-	inline static Index numValues(const Size &size) noexcept { return size.prod(); }
-	inline Index numValues() const noexcept { return numValues(_size); }
-	inline const Size &size() const noexcept { return _size; }
+	inline static Index numValues(const Size &size) { return size.prod(); }
+	inline Index numValues() const  { return numValues(_size); }
+	inline const Size &size() const { return _size; }
 
 	void resize(const Size &size, const T &initialValue = T())
 	{
@@ -208,7 +216,7 @@ public:
 		_data = std::move(newData);
 	}
 
-	void clear() noexcept
+	void clear()
 	{
 	    for (int i = 0; i < _size.size(); ++i)
             _size[i] = 0;
@@ -259,8 +267,8 @@ public:
 	ConstIterator rcbegin() const { return _data.crbegin(); }
 	ConstIterator rcend()   const { return _data.crend(); }
 
-	Data &data() noexcept { return _data; }
-	const Data &data() const noexcept { return _data; }
+	Data &data() { return _data; }
+	const Data &data() const { return _data; }
 
 	static Position indexToPosition(Index index, const Size &size)
 	{

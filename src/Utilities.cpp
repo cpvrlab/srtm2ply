@@ -6,11 +6,22 @@
 
 #include "Utilities.h"
 
+#include <dirent.h>
 #if defined(_MSC_VER)
 #include <windows.h>
 #include <Shlwapi.h>
 #include <vector>
+#include <direct.h>
+#define getcwd _getcwd
+#else
+#include <unistd.h>
 #endif
+
+
+std::string getCwd()
+{
+	return getcwd(nullptr, 0);
+}
 
 std::string getAbsolutePath(const std::string &path)
 {
