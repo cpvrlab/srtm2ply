@@ -132,9 +132,11 @@ if (MSVC)
      URL file://${CMAKE_CURRENT_SOURCE_DIR}/dirent.zip
      SOURCE_DIR ${DIRENT_SOURCE_DIR}
      BINARY_DIR ${DIRENT_BINARY_DIR}
-     UPDATE_COMMAND ""
-     BUILD_COMMAND  ""
-     INSTALL_COMMAND ""
+     CONFIGURE_COMMAND ""
+     UPDATE_COMMAND    ""
+     BUILD_COMMAND     ""
+     PATCH_COMMAND     ""
+     INSTALL_COMMAND   ""
   )
   #add_subdirectory(dirent)
 else()
