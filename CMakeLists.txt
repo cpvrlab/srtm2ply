@@ -66,6 +66,7 @@ set(HEADERS
         ./src/SRTM.h
         ./src/Tensor.h
         ./src/Utilities.h
+        ./src/CLI.h
     )
 
 set(SOURCES
@@ -75,6 +76,8 @@ set(SOURCES
         ./src/Parsing.cpp
         ./src/Mesh.cpp
         ./src/Utilities.cpp
+        ./src/CLI.cpp
+        ./src/CLI_MSVC.cpp
     )
 
 add_executable(srtm2ply ${HEADERS} ${SOURCES})
@@ -134,10 +137,21 @@ elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
     endif()
 endif()
 
-if (#NOT libClipper        OR
-    NOT libDocopt         OR
-    NOT libGeographiclib  #OR
-    )
+set(LIBRARIES_COMPILED TRUE)
+if (MSVC AND (MSVC_VERSION LESS 1900))
+    if (NOT libGeographiclib)
+        set(LIBRARIES_COMPILED FALSE)
+    endif()
+else()
+    if (#NOT libClipper        OR
+        NOT libDocopt         OR
+        NOT libGeographiclib  #OR
+        )
+        set(LIBRARIES_COMPILED FALSE)
+    endif()
+endif()
+
+if (NOT LIBRARIES_COMPILED)
     message("One or multiple external libraries are not yet compiled.")
     message("CMake will automatically be re-run during your next build.")
     #rerun cmake in initial build
