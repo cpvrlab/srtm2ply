@@ -56,6 +56,8 @@ ExternalProject_Add(
 # #add_subdirectory(clipper/cpp)
 
 #Docopt
+if (NOT MSVC OR NOT MSVC_VERSION LESS 1900)
+
 file(DOWNLOAD https://codeload.github.com/docopt/docopt.cpp/zip/master
               ${CMAKE_CURRENT_SOURCE_DIR}/docopt.zip
      #Docopt.cpp only provides a master branch, so there are no stable releases.
@@ -84,6 +86,8 @@ ExternalProject_Add(
         -DCMAKE_INSTALL_PREFIX:STRING=<INSTALL_DIR>
 )
 #add_subdirectory(docopt)
+
+endif()
 
 #Geographiclib
 file(DOWNLOAD http://heanet.dl.sourceforge.net/project/geographiclib/distrib/GeographicLib-1.44.tar.gz
