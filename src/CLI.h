@@ -39,24 +39,24 @@ two sampling points in the SRTM dataset (i.e. an arc second for the newest data)
 
 struct CommandLineArguments
 {
-  CommandLineArguments():
-    inputDirectory("."),
-    outputDirectory("."),
+    CommandLineArguments():
+      inputDirectory("."),
+      outputDirectory("."),
 
-    tileSize(0,0),
-    useCoarseSrtmResolution(false),
-    produceAsciiPly(false),
-    numThreads(0)
-  {}
+      tileSize(0,0),
+      useCoarseSrtmResolution(false),
+      produceAsciiPly(false),
+      numThreads(0)
+    {}
 
-  std::string inputDirectory;
-  std::string outputDirectory;
-  std::array<WGS84::Point, 2> boundaryPoints;
-  WGS84::Point meshOrigin;
-  Eigen::Vector2i tileSize;
-  bool useCoarseSrtmResolution;
-  bool produceAsciiPly;
-  int numThreads;
+    std::string inputDirectory;
+    std::string outputDirectory;
+    std::array<WGS84::Point, 2> boundaryPoints;
+    WGS84::Point meshOrigin;
+    Eigen::Vector2i tileSize;
+    bool useCoarseSrtmResolution;
+    bool produceAsciiPly;
+    int numThreads;
 };
 
 CommandLineArguments parseCommandLine(int argc, const char** argv);
