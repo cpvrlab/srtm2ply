@@ -50,6 +50,9 @@ CommandLineArguments parseCommandLine(int argc, const char** argv)
 		NUM_THREADS,
 		COARSE_SRTM,
 		
+		FROM_POINT,
+		TO_POINT,
+
 		INPUT_DIRECTORY,
 		OUTPUT_DIRECTORY,
 
@@ -138,6 +141,12 @@ CommandLineArguments parseCommandLine(int argc, const char** argv)
 
 		if (optionsParsed)
 		{
+			if (!parsedOptions[FROM_POINT])
+				arguments.boundaryPoints[0] = parseWGS84(*currentArgument);
+			
+			if (!parsedOptions[TO_POINT])
+				arguments.boundaryPoints[1] = parseWGS84(*currentArgument);
+
 			if (!parsedOptions[INPUT_DIRECTORY])
 				arguments.inputDirectory = *currentArgument;
 
