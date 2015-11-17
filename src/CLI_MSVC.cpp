@@ -143,13 +143,25 @@ CommandLineArguments parseCommandLine(int argc, const char** argv)
 		if (optionsParsed)
 		{
 			if (!parsedOptions[FROM_POINT])
+			{
+				setOptionParsed(COARSE_SRTM);
 				arguments.boundaryPoints[0] = parseWGS84(*currentArgument);
+			}
 			else if (!parsedOptions[TO_POINT])
+			{
+				setOptionParsed(COARSE_SRTM);
 				arguments.boundaryPoints[1] = parseWGS84(*currentArgument);
+			}
 			else if (!parsedOptions[INPUT_DIRECTORY])
+			{
+				setOptionParsed(COARSE_SRTM);
 				arguments.inputDirectory = *currentArgument;
+			}
 			else if (!parsedOptions[OUTPUT_DIRECTORY])
+			{
+				setOptionParsed(COARSE_SRTM);
 				arguments.outputDirectory = *currentArgument;
+			}
 			else //Too many options...
 				printAndExit(USAGE);
 		}
