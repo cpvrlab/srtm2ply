@@ -144,22 +144,22 @@ CommandLineArguments parseCommandLine(int argc, const char** argv)
 		{
 			if (!parsedOptions[FROM_POINT])
 			{
-				setOptionParsed(COARSE_SRTM);
+				setOptionParsed(FROM_POINT);
 				arguments.boundaryPoints[0] = parseWGS84(*currentArgument);
 			}
 			else if (!parsedOptions[TO_POINT])
 			{
-				setOptionParsed(COARSE_SRTM);
+				setOptionParsed(TO_POINT);
 				arguments.boundaryPoints[1] = parseWGS84(*currentArgument);
 			}
 			else if (!parsedOptions[INPUT_DIRECTORY])
 			{
-				setOptionParsed(COARSE_SRTM);
+				setOptionParsed(INPUT_DIRECTORY);
 				arguments.inputDirectory = *currentArgument;
 			}
 			else if (!parsedOptions[OUTPUT_DIRECTORY])
 			{
-				setOptionParsed(COARSE_SRTM);
+				setOptionParsed(OUTPUT_DIRECTORY);
 				arguments.outputDirectory = *currentArgument;
 			}
 			else //Too many options...
