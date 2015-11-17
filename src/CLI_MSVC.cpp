@@ -38,7 +38,8 @@ CommandLineArguments parseCommandLine(int argc, const char** argv)
 		printAndExit(USAGE);
 
 	bool optionsParsed = false;
-	auto currentArgument = args.begin();
+	//Agument[0] contains the executable path
+	auto currentArgument = args.begin()+1;
 
 	enum Option: unsigned int
 	{
@@ -143,18 +144,14 @@ CommandLineArguments parseCommandLine(int argc, const char** argv)
 		{
 			if (!parsedOptions[FROM_POINT])
 				arguments.boundaryPoints[0] = parseWGS84(*currentArgument);
-			
-			if (!parsedOptions[TO_POINT])
+			else if (!parsedOptions[TO_POINT])
 				arguments.boundaryPoints[1] = parseWGS84(*currentArgument);
-
-			if (!parsedOptions[INPUT_DIRECTORY])
+			else if (!parsedOptions[INPUT_DIRECTORY])
 				arguments.inputDirectory = *currentArgument;
-
-			if (!parsedOptions[OUTPUT_DIRECTORY])
+			else if (!parsedOptions[OUTPUT_DIRECTORY])
 				arguments.outputDirectory = *currentArgument;
-
-			//Too many options...
-			printAndExit(USAGE);
+			else //Too many options...
+				printAndExit(USAGE);
 		}
 	}
 
