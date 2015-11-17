@@ -158,6 +158,15 @@ CommandLineArguments parseCommandLine(int argc, const char** argv)
 		}
 	}
 
+	if (!parsedOptions[FROM_POINT] || !parsedOptions[TO_POINT])
+		printAndExit(USAGE);
+
+	if (!parsedOptions[ORIGIN])
+		arguments.meshOrigin = .5*(arguments.boundaryPoints[0] + arguments.boundaryPoints[1]);
+
+	if (!parsedOptions[NUM_THREADS])
+		arguments.numThreads = parseNumberOfThreads("#CPUs");
+
 	return arguments;
 }
 
