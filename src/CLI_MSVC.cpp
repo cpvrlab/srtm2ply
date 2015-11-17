@@ -161,8 +161,12 @@ CommandLineArguments parseCommandLine(int argc, const char** argv)
 	if (!parsedOptions[FROM_POINT] || !parsedOptions[TO_POINT])
 		printAndExit(USAGE);
 
+	auto &from = arguments.boundaryPoints[0];
+	auto &to = arguments.boundaryPoints[1];
 	if (!parsedOptions[ORIGIN])
-		arguments.meshOrigin = WGS84::Point(.5*(arguments.boundaryPoints[0] + arguments.boundaryPoints[1]));
+		arguments.meshOrigin = WGS84::Point(.5*(from.latitude()  + to.latitude()),
+		                                    .5*(from.longitude() + to.longitude()),
+											.5*(from.altitude()  + to.altitude()));
 
 	if (!parsedOptions[NUM_THREADS])
 		arguments.numThreads = parseNumberOfThreads("#CPUs");
