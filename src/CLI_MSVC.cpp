@@ -18,6 +18,7 @@
 #include <string>
 #include <regex>
 #include <iostream>
+#include <bitset>
 
 void printAndExit(const std::string &message)
 {
@@ -36,10 +37,44 @@ CommandLineArguments parseCommandLine(int argc, const char** argv)
 	if (args.empty()) 
 		printAndExit(USAGE);
 
-	bool parsing = true;
 	bool optionsParsed = false;
-	std::string *arg = &args.front();
-	while (parsing)
+	auto currentArgument = args.begin();
+
+	enum Option: unsigned int
+	{
+		HELP = 0,
+		VERSON,
+		ORIGIN,
+		TILE_SIZE,
+		ASCII_PLY,
+		NUM_THREADS,
+		COARSE_SRTM,
+		
+		INPUT_DIRECTORY,
+		OUTPUT_DIRECTORY,
+
+		NUM_OPTIONS
+	};
+
+	std::bitset<NUM_OPTIONS> parsedOptions = 0;
+	auto setOptionParsed =
+		[&](Option option) {
+			if (parsedOptions[option])
+				printAndExit(USAGE);
+			else
+				parsedOptions[option] = true;
+		};
+
+	auto getArgumentValue =
+		[&](const std::smatch &match)
+		{
+			if (match.str(1).empty())
+				return *(++currentArgument);
+			else
+				return match.str(1);
+		};
+
+	for(currentArgument; currentArgument != args.end(); ++currentArgument)
 	{
 		static const auto &icase = std::regex_constants::icase;
 
@@ -47,26 +82,70 @@ CommandLineArguments parseCommandLine(int argc, const char** argv)
 		{
 			std::smatch match;
 
-			auto &currentArgument = *arg;
-
 			static const std::regex helpPattern("^-h|--help$", icase);
-			if (std::regex_match(currentArgument, helpPattern))
+			if (std::regex_match(*currentArgument, helpPattern))
 				printAndExit(USAGE);
 
 			static const std::regex versionPattern("^-v|--version$", icase);
-			if (std::regex_match(currentArgument, versionPattern))
+			if (std::regex_match(*currentArgument, versionPattern))
 				printAndExit(VERSION);
 
-			static const std::regex originPattern("^-o|(?:--origin=.*)$");
-			if (std::regex_match(currentArgument, match, originPattern))
+			static const std::regex originPattern("^-o|(?:--origin=(\S+))$");
+			if (std::regex_match(*currentArgument, match, originPattern))
 			{
-				
+				setOptionParsed(ORIGIN);
+				auto argument = getArgumentValue(match);
+				arguments.meshOrigin = parseWGS84(argument);
+				continue;
 			}
+
+			static const std::regex tileSizePattern("^-s|(?:--tile-size=(\S+))$");
+			if (std::regex_match(*currentArgument, match, tileSizePattern))
+			{
+				setOptionParsed(TILE_SIZE);
+				auto argument = getArgumentValue(match);
+				arguments.tileSize = parseSize(argument);
+				continue;
+			}
+
+			static const std::regex asciiPlyPattern("^-a|--ascii-ply$");
+			if (std::regex_match(*currentArgument, match, asciiPlyPattern))
+			{
+				setOptionParsed(ASCII_PLY);
+				arguments.produceAsciiPly = true;
+				continue;
+			}
+
+			static const std::regex numThreadsPattern("^-j|(?:-j=(\S+))$");
+			if (std::regex_match(*currentArgument, match, numThreadsPattern))
+			{
+				setOptionParsed(NUM_THREADS);
+				auto argument = getArgumentValue(match);
+				arguments.numThreads = parseNumberOfThreads(argument);
+				continue;
+			}
+
+			static const std::regex coarseSrtmPattern("^-srtm3$");
+			if (std::regex_match(*currentArgument, match, coarseSrtmPattern))
+			{
+				setOptionParsed(COARSE_SRTM);
+				arguments.useCoarseSrtmResolution = true;
+				continue;
+			}
+
+			optionsParsed = true;
 		}
 
 		if (optionsParsed)
 		{
+			if (!parsedOptions[INPUT_DIRECTORY])
+				arguments.inputDirectory = *currentArgument;
 
+			if (!parsedOptions[OUTPUT_DIRECTORY])
+				arguments.outputDirectory = *currentArgument;
+
+			//Too many options...
+			printAndExit(USAGE);
 		}
 	}
 
