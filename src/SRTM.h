@@ -331,17 +331,17 @@ public:
             {}
 
             TileCacheEntry(const TileCacheEntry&) = default;
-			TileCacheEntry(TileCacheEntry &&other):
-				tile(std::move(other.tile)),
-				blacklisted(other.blacklisted)
-			{}
+            TileCacheEntry(TileCacheEntry &&other):
+                tile(std::move(other.tile)),
+                blacklisted(other.blacklisted)
+            {}
 
             TileCacheEntry &operator=(const TileCacheEntry&) = default;
-			TileCacheEntry &operator=(TileCacheEntry &&other)
-			{
-				tile = std::move(other.tile);
-				blacklisted = other.blacklisted;
-			}
+            TileCacheEntry &operator=(TileCacheEntry &&other)
+            {
+                tile = std::move(other.tile);
+                blacklisted = other.blacklisted;
+            }
 
             P tile;
             bool blacklisted;
@@ -482,27 +482,27 @@ public:
     }
 
     SrtmTile(const SrtmTile&) = default;
-	SrtmTile(SrtmTile &&other) :
-		_bounds(other._bounds),
-		_data(std::move(other._data)),
-		_aRange(*this),
-		_wRange(*this)
-	{
-		other._bounds.setEmpty();
-	}
+    SrtmTile(SrtmTile &&other) :
+        _bounds(other._bounds),
+        _data(std::move(other._data)),
+        _aRange(*this),
+        _wRange(*this)
+    {
+        other._bounds.setEmpty();
+    }
 
-	SrtmTile &operator=(const SrtmTile &other)
-	{
-		_bounds = other._bounds;
-		_data = other._data;
-	}
+    SrtmTile &operator=(const SrtmTile &other)
+    {
+        _bounds = other._bounds;
+        _data = other._data;
+    }
 
-	SrtmTile &operator=(SrtmTile &&other)
-	{
-		_bounds = other._bounds;
-		other._bounds.setEmpty();
-		_data = std::move(other._data);
-	}
+    SrtmTile &operator=(SrtmTile &&other)
+    {
+        _bounds = other._bounds;
+        other._bounds.setEmpty();
+        _data = std::move(other._data);
+    }
 
     inline bool isEmpty() const { return _bounds.isEmpty(); }
     inline const Bounds &bounds() const { return _bounds; }

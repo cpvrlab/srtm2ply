@@ -61,28 +61,28 @@ void generateMeshes(const CommandLineArguments &arguments)
     typedef typename Tile::AbstractCache AbstractCache;
     typedef typename Tile::Cache Cache;
     typedef typename Tile::Cache WeakCache;
-	
-	auto &from   = arguments.boundaryPoints[0];
-	auto &to     = arguments.boundaryPoints[1];
-	auto &origin = arguments.meshOrigin;
+    
+    auto &from   = arguments.boundaryPoints[0];
+    auto &to     = arguments.boundaryPoints[1];
+    auto &origin = arguments.meshOrigin;
 
-	auto mapBoundaries = Tile::bounds(from,to);
+    auto mapBoundaries = Tile::bounds(from,to);
     Eigen::Vector2i mapSize = mapBoundaries.diagonal() + Eigen::Vector2i(1,1);
 
-	Eigen::Vector2i tileSize = arguments.tileSize;
-	if ((tileSize.array() < 1).any())
-		tileSize = mapSize;
+    Eigen::Vector2i tileSize = arguments.tileSize;
+    if ((tileSize.array() < 1).any())
+        tileSize = mapSize;
 
     omp_set_nested(0);
-	omp_set_num_threads(arguments.numThreads);
+    omp_set_num_threads(arguments.numThreads);
 
     static const auto ceil = [](double a){ return std::ceil(a); };
     Eigen::Vector2i numTiles = Eigen::Vector2d( //Element-wise division -> ceiling
                                     (mapSize.cast<double>().array()/tileSize.cast<double>().array()
                                ).unaryExpr(ceil)).cast<int>();
 
-	
-	std::cout << "Input  directory: " << arguments.inputDirectory << "\n";
+    
+    std::cout << "Input  directory: " << arguments.inputDirectory << "\n";
     std::cout << "Output directory: " << arguments.outputDirectory << "\n\n";
 
     std::cout << "From:      " << std::setw(5) << from[0]      << " / " << std::setw(5) << from[1]   << " / " << std::setw(5) << from[2]   << "\n";
@@ -105,7 +105,7 @@ void generateMeshes(const CommandLineArguments &arguments)
 
     LCS lcs(origin);
 //    std::unique_ptr<AbstractCache> cache(new Cache(inputDir));
-	std::unique_ptr<AbstractCache> cache(new WeakCache(arguments.inputDirectory));
+    std::unique_ptr<AbstractCache> cache(new WeakCache(arguments.inputDirectory));
 
     const size_t numTasks = tileDefinitions.numValues();
     std::atomic<size_t> tasksCompleted;
@@ -145,7 +145,7 @@ void generateMeshes(const CommandLineArguments &arguments)
             try
             {
                 std::stringstream ss;
-				ss << arguments.outputDirectory << "/" << i << ".ply";
+                ss << arguments.outputDirectory << "/" << i << ".ply";
 
                 auto filename = ss.str();
                 //ScopedTimer timer(filename);
@@ -156,10 +156,10 @@ void generateMeshes(const CommandLineArguments &arguments)
 
                 std::ofstream file(filename);
 
-				if (arguments.produceAsciiPly)
-					mesh.toAsciiPly(file);
-				else
-					mesh.toBinaryPly(file);
+                if (arguments.produceAsciiPly)
+                    mesh.toAsciiPly(file);
+                else
+                    mesh.toBinaryPly(file);
             }
             catch(std::exception &e)
             { //Exceptions break the omp loop and lead to a terminate(). Handle them here.
@@ -194,14 +194,14 @@ int main(int argc, const char** argv)
 {
     try
     {
-		auto arguments = parseCommandLine(argc, argv);
+        auto arguments = parseCommandLine(argc, argv);
 
-		if (arguments.useCoarseSrtmResolution)
-			generateMeshes<SRTM3::Tile>(arguments);
-		else
-			generateMeshes<SRTM1::Tile>(arguments);
+        if (arguments.useCoarseSrtmResolution)
+            generateMeshes<SRTM3::Tile>(arguments);
+        else
+            generateMeshes<SRTM1::Tile>(arguments);
     } 
-	catch(std::exception &e)
+    catch(std::exception &e)
     {
         std::cerr << "An unexpected error occurred: \n"
                   << e.what() << std::endl;

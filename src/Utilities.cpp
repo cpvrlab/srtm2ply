@@ -20,40 +20,40 @@
 
 std::string getCwd()
 {
-	return getcwd(nullptr, 0);
+    return getcwd(nullptr, 0);
 }
 
 std::string getAbsolutePath(const std::string &path)
 {
-	std::string result = "";
+    std::string result = "";
 #if defined(_MSC_VER)
-	result.resize(MAX_PATH,' ');
-	SetLastError(0);
-	GetFullPathName(path.c_str(), result.size(), &result[0], nullptr);
-	if (GetLastError())
-		throw std::runtime_error("Could not determine absolute path of file.");
-	if (!PathFileExists(result.c_str()))
-		result = "";
+    result.resize(MAX_PATH,' ');
+    SetLastError(0);
+    GetFullPathName(path.c_str(), result.size(), &result[0], nullptr);
+    if (GetLastError())
+        throw std::runtime_error("Could not determine absolute path of file.");
+    if (!PathFileExists(result.c_str()))
+        result = "";
 #else
-	char *abs = realpath(path.c_str(), NULL);
-	if (abs)
-	{
-		result = std::string(abs);
-		free(abs);
-	}
+    char *abs = realpath(path.c_str(), NULL);
+    if (abs)
+    {
+        result = std::string(abs);
+        free(abs);
+    }
 #endif
-	return result;
+    return result;
 }
 
 std::string absolutePath(const std::string &path)
 {
     std::string result = getAbsolutePath(path);
-	if (result.empty())
-	{
-		std::stringstream ss;
-		ss << "Could not find file or directory \""
-			<< path << "\".";
-		throw std::runtime_error(ss.str());
-	}
-	return result;
+    if (result.empty())
+    {
+        std::stringstream ss;
+        ss << "Could not find file or directory \""
+            << path << "\".";
+        throw std::runtime_error(ss.str());
+    }
+    return result;
 }
