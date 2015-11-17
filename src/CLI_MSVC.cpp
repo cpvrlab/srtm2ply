@@ -90,7 +90,7 @@ CommandLineArguments parseCommandLine(int argc, const char** argv)
 			if (std::regex_match(*currentArgument, versionPattern))
 				printAndExit(VERSION);
 
-			static const std::regex originPattern("^-o|(?:--origin=(\S+))$");
+			static const std::regex originPattern("^-o|(?:--origin=(\\S+))$");
 			if (std::regex_match(*currentArgument, match, originPattern))
 			{
 				setOptionParsed(ORIGIN);
@@ -99,7 +99,7 @@ CommandLineArguments parseCommandLine(int argc, const char** argv)
 				continue;
 			}
 
-			static const std::regex tileSizePattern("^-s|(?:--tile-size=(\S+))$");
+			static const std::regex tileSizePattern("^-s|(?:--tile-size=(\\S+))$");
 			if (std::regex_match(*currentArgument, match, tileSizePattern))
 			{
 				setOptionParsed(TILE_SIZE);
@@ -116,7 +116,7 @@ CommandLineArguments parseCommandLine(int argc, const char** argv)
 				continue;
 			}
 
-			static const std::regex numThreadsPattern("^-j|(?:-j=(\S+))$");
+			static const std::regex numThreadsPattern("^-j|(?:-j=(\\S+))$");
 			if (std::regex_match(*currentArgument, match, numThreadsPattern))
 			{
 				setOptionParsed(NUM_THREADS);
