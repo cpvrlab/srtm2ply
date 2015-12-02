@@ -28,7 +28,11 @@ of 256x256 sampling points will result in 16 bit indices).
 
 WGS84 coordinates have to be specified using the following format (using degrees as the unit of angle):
 <latitude>[N|S] [-]<longitude>[E|W] [<altitude>m], e.g. "51.48125N 0.008069W" for Greenwich.
+A tool for various coordinate types: http://tools.retorte.ch/map/
 
 Tile sizes should be specified as <width>x<height> in integer numbers, with 1 representing the distance between
 two sampling points in the SRTM dataset (i.e. an arc second for the newest data).
+
+Example:
+srtm2ply.exe -s "256x265" "46.23N 7.22E" "45.83N 8.14E" "w:\projects\Stratos\data\SRTM\SRTM_world_30m" "c:\temp\ply"
 ```
