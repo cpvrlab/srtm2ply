@@ -141,7 +141,7 @@ public:
         Iterator cend()   const { return end();   }
 
         const T &operator[](Index index)         const { assert(_tile); return (_tile->*_indexAccess)(index);  }
-        const T &operator[](const Position &pos) const { assert(_tile); return (_tile->*_indexAccess)(_tile->indexAtPosition(index)); }
+        const T &operator[](const Position &pos) const { assert(_tile); return (_tile->*_indexAccess)(_tile->indexAtPosition(pos)); }
 
     private:
         Tile *_tile;
@@ -182,7 +182,7 @@ public:
         {}
 
         Subview(const Tile &tile, const WGS84::Point &from, const WGS84::Point &to):
-            Subview(Tile::bounds(from,to))
+            Subview(tile,Tile::bounds(from,to))
         {}
 
         Subview(const Subview&) = default;
@@ -195,7 +195,7 @@ public:
         inline size_t numValues() const noexcept { return _size.prod(); }
         inline Index indexAtPosition(const Position &pos) const noexcept { assertCorrectPosition(pos); return Data::positionToIndex(pos,_size); }
         inline Position positionAtIndex(Index index) const noexcept { assertCorrectIndex(index); return Data::indexToPosition(index,_size); }
-        inline bool contains(const WGS84::Point &p) const { return Tile::Contains(_bounds,p); }
+        inline bool contains(const WGS84::Point &p) const { return Tile::contains(_bounds,p); }
 
         Position tilePosition(const Position &pos) const
         {
@@ -545,12 +545,12 @@ public:
         Eigen::Array2i pos = sw.cast<int>() - _bounds.min();
 
         assert((pos >= 0).all());
-        assert((size > pos).all());
+        assert((size() > pos).all());
 
         if (!(offsets > 0.0).any())
             return altitudeAt(pos);
 
-        assert((size-pos > 1).all());
+        assert((size()-pos > 1).all());
 
         return    offsets[0] *   offsets[1] *altitudeAt(Position(pos[0]  ,pos[1]  ))
              + (1-offsets[0])*   offsets[1] *altitudeAt(Position(pos[0]+1,pos[1]  ))

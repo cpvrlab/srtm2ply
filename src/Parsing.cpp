@@ -79,10 +79,10 @@ WGS84::Point parseWGS84(const std::string &coordinates)
 
     double altitude = strtod(std::string(match[5]).c_str(),nullptr);
 
-    if (!std::isfinite(latitude) || abs(latitude) > 180)
+    if (!std::isfinite(latitude) || std::abs(latitude) > 180)
         throw ParseError(coordinates);
 
-    if (!std::isfinite(longitude) || abs(longitude) > 90)
+    if (!std::isfinite(longitude) || std::abs(longitude) > 90)
         throw ParseError(coordinates);
 
     if (!std::isfinite(altitude))

@@ -21,8 +21,6 @@
 #include <unistd.h>
 #endif // _MSC_VER
 
-#include <omp.h>
-
 #include <docopt.h>
 
 #include "SRTM.h"
@@ -117,8 +115,8 @@ Mesh meshFromSrtmTile(const T &tile, const LCS &coordinateSystem)
             auto idx3 = tile.indexAtPosition({x  ,y+1});
             auto idx4 = tile.indexAtPosition({x+1,y+1});
 
-            mesh.faces.push_back({idx1,idx2,idx3});
-            mesh.faces.push_back({idx2,idx4,idx3});
+            mesh.faces.push_back({{idx1,idx2,idx3}});
+            mesh.faces.push_back({{idx2,idx4,idx3}});
         }
     }
 
@@ -225,7 +223,7 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
     //This should lead them to sharing more tiles, which means
     //less I/O overhead while reading the tiles from disk.
     std::vector<Task> tasks(num_threads);
-    for (int i = 0; i < tileDefinitions.numValues(); ++i)
+    for (size_t i = 0; i < tileDefinitions.numValues(); ++i)
     {
         Task &task = tasks[i % num_threads];
         if (task.valid())

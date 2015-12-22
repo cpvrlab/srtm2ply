@@ -203,8 +203,8 @@ struct WorldGeodeticSystem
         bool isValid() const
         {
             //Check if latitude and longitude are well-formed (i.e. within their degree range)
-            return abs(latitude()/90) <= 1.0 &&
-                   abs(longitude()/180) <= 1.0;
+            return std::abs(latitude()/90) <= 1.0 &&
+                   std::abs(longitude()/180) <= 1.0;
         }
     };
 
@@ -351,8 +351,8 @@ struct EarthGravitationalModel
         bool isValid() const
         {
             //Check if latitude and longitude are well-formed (i.e. within their degree range)
-            return abs(latitude()/90) <= 1.0 &&
-                   abs(longitude()/180) <= 1.0;
+            return std::abs(latitude()/90) <= 1.0 &&
+                   std::abs(longitude()/180) <= 1.0;
         }
     };
 
