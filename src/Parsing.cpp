@@ -5,7 +5,7 @@
 #include <sstream>
 #include <cmath>
 #include <ctgmath>
-#include <omp.h>
+#include <thread>
 
 std::string parseErrorMessage(const std::string &expression)
 {
@@ -131,7 +131,7 @@ int parseNumberOfThreads(const std::string &n)
     std::smatch match;
 
     if (std::regex_match(n, match, pattern1))
-        return omp_get_num_procs();
+        return std::thread::hardware_concurrency();
 
     if (!std::regex_match(n, match, pattern2))
         return 1;

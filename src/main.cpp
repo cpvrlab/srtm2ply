@@ -7,6 +7,7 @@
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <future>
 
 #include <cstddef>
 #include <cstdlib>
@@ -160,11 +161,7 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
     else
         tileSize = mapSize;
 
-    omp_set_nested(0);
-    {
-        int num_threads = parseNumberOfThreads(args["-j"].asString());
-        omp_set_num_threads(num_threads);
-    }
+    int num_threads = parseNumberOfThreads(args["-j"].asString());
 
     static const auto ceil = [](double a){ return std::ceil(a); };
     Eigen::Vector2i numTiles = Eigen::Vector2d( //Element-wise division -> ceiling
@@ -201,7 +198,8 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
     auto start = std::chrono::high_resolution_clock::now();
     tasksCompleted.store(0);
 
-    static const auto print_progress = [&]() -> void {
+    typedef std::future<void> Task;
+    Task print_progress = std::async(std::launch::async, [&]() {
         size_t lastCounter    = 0;
         size_t currentCounter = 0;
         do
@@ -220,17 +218,20 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         } while(currentCounter != numTasks);
-    };
+    });
 
-    static const auto generate_tiles = [&]() -> void {
-        //Parallelize the computation
-        //Scheduling static,1 will interleave the different threads
-        //(i.e. thread 1 gets tile 1, thread 2 tile 2 etc.)
-        //This should lead them to sharing more tiles, which means
-        //less I/O overhead while reading the tiles from disk.
-        #pragma omp parallel for default(shared)
-        for (int i = 0; i < tileDefinitions.numValues(); ++i)
-        {
+    //Parallelize the computation and interleave the different threads
+    //(i.e. thread 1 gets tile 1, thread 2 tile 2 etc.)
+    //This should lead them to sharing more tiles, which means
+    //less I/O overhead while reading the tiles from disk.
+    std::vector<Task> tasks(num_threads);
+    for (int i = 0; i < tileDefinitions.numValues(); ++i)
+    {
+        Task &task = tasks[i % num_threads];
+        if (task.valid())
+            task.wait();
+
+        auto runTask = [&](){
             try
             {
                 std::stringstream ss;
@@ -262,14 +263,15 @@ void generateMeshes(std::map<std::string, docopt::value> &args)
                 exit(-1);
             }
             ++tasksCompleted;
-        }
-    };
+        };
+        task = std::async(std::launch::async,runTask);
+    }
 
-    auto progressThread = std::thread(print_progress);
-    auto generationThread = std::thread(generate_tiles);
+    for (auto &task: tasks)
+        if (task.valid())
+            task.wait();
 
-    progressThread.join();
-    generationThread.join();
+    print_progress.wait();
 
     auto now = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(now-start).count();
